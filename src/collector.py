@@ -187,19 +187,6 @@ class Collector():
             type=type,
             name=name)) > 0
 
-    def find_existing_edge(self, left, right, type):
-        graph = self.graph.current_state_graph()
-        edges = [{
-            "k": k,
-            "left": graph[k]["left"],
-            "right": graph[k]["right"],
-            "type": graph[k]["type"]} for k in graph.keys()]
-        existing_edge = [edge["k"] for edge in edges if edge["left"] == left and edge["right"] == right and edge["type"] == type]
-        if existing_edge:
-            return existing_edge[0]
-        else:
-        return (left, right, type) in edges
-
     def interpret_prompt_text(self, text):
 
         parsed = parse_prompt_text(text=text)
@@ -243,12 +230,7 @@ class Collector():
             if len(right_guid) > 1:
                 raise Exception(f"Found {len(right_guid)} nodes with type '{parsed['type_2']}' and name '{parsed['name_2']}'")
 
-            # check if an active edge exists with right and left and type equal to above
-            # if so, retrieve an ID (for edge edges) and don't create a new one
-            if self.edge_exists(left=left_guid[0], right=right_guid[0], type=parsed['edge_type']):
-                print(f"Found existing edge between guid: '{left_guid[0]}' and  guid: '{right_guid[0]}' with type: '{parsed['edge_type']}'.")
-            else:
-                self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
+            self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
 
             # add edge edges value node (if needed) and edge from edge to value
 
