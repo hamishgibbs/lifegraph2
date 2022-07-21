@@ -136,6 +136,7 @@ class Graph:
         return new_guid
 
     def derive_schema(self):
+        # does this work for edge edges?
         graph = self.current_state_graph()
 
         types = [graph[x]["type"] for x in graph.keys()
@@ -201,7 +202,7 @@ class Graph:
     # now add speedy data collection (i.e. Arnold Schwarzenneger height 6' 1")
     # (i.e. Zaifeng, Prince Chun, appointed Qing Emperor, year: 1901)
         # second one is an example of an edge edge
-    [zaifeng, appointed, Qing Emperor [year: 1901, location: China]]
+    # [zaifeng, appointed, Qing Emperor [year: 1901, location: China]]
     # fuzzy_match_by_precedence() # match a string to some entity by appromximate name on decending precedence keys
     # create_from_freetext(text) # match subject, predicate, object, with any n edge edges
 
