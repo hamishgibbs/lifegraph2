@@ -65,12 +65,15 @@ def parse_prompt_text(text):
     types = re.findall(r"\[([^\s]+):", text)
     names = re.findall(r": (.*?)\]", text)
     edge_type = re.findall(r"\] (.*?) \[", text)
+    edge_edges = re.findall(r"\((.*?): (.*?)\)", text)
+
     return {
         "type_1": types[0] if len(types) > 0 else None,
         "name_1": names[0] if len(names) > 0 else None,
         "edge_type": edge_type[0] if len(edge_type) else None,
         "type_2": types[1] if len(types) > 1 else None,
-        "name_2": names[1] if len(names) > 1 else None
+        "name_2": names[1] if len(names) > 1 else None,
+        "edge_edges": edge_edges
     }
 
 class CustomCompleter(Completer, Graph):
@@ -106,6 +109,18 @@ class CustomCompleter(Completer, Graph):
         parsed = parse_prompt_text(text)
         return [x[2] for x in self.precedence_names_for_type(type=parsed["type_2"])]
 
+    def get_type_edge_edge_suggestions(self, text):
+        # simple types of all edge edges
+        # get guids of all edges (edge_guids)
+        # get type of all guids with left in edge_guids
+        graph = self.current_state_graph()
+        edge_guids = [k for k in graph.keys() if graph[k]["left"] and graph[k]["right"]]
+        return [graph[k]["type"] for k in graph.keys() if graph[k]["left"] in edge_guids]
+
+    def get_edge_edge_name_suggestions(self, text):
+        # simply the values of the right of edge edges
+        return False
+
     def get_text_input_state(self, text):
         if text == "[":
             return "type_1"
@@ -115,8 +130,12 @@ class CustomCompleter(Completer, Graph):
             return "type_edge"
         elif text.count("[") == 2 and text.count(":") == 1:
             return "type_2"
-        elif text.count("[") == 2 and text.count(":") == 2:
+        elif text.count("[") == 2 and text.count(":") == 2 and text.count("(") == 0:
             return "name_2"
+        elif text.count("(") >= 1 and text.count("(") == text.count(")"):
+            return "name_edge_edge"
+        elif text.count("(") >= 1:
+            return "type_edge_edge"
 
     def get_completions(self, document, complete_event):
         #print(document.text)
@@ -133,11 +152,14 @@ class CustomCompleter(Completer, Graph):
             types = self.get_type_2_suggestions(document.text)
         elif self.get_text_input_state(document.text) == "name_2":
             types = self.get_name_2_suggestions(document.text)
+        elif self.get_text_input_state(document.text) == "type_edge_edge":
+            types = self.get_type_edge_edge_suggestions(document.text)
         else:
             types = []
 
         word = document.get_word_before_cursor()
         word = word.replace("[", "")
+        # replace "("?
         for type in types:
             if type.startswith(word):
                 yield Completion(type, start_position=-1*len(word))
@@ -165,6 +187,19 @@ class Collector():
             type=type,
             name=name)) > 0
 
+    def find_existing_edge(self, left, right, type):
+        graph = self.graph.current_state_graph()
+        edges = [{
+            "k": k,
+            "left": graph[k]["left"],
+            "right": graph[k]["right"],
+            "type": graph[k]["type"]} for k in graph.keys()]
+        existing_edge = [edge["k"] for edge in edges if edge["left"] == left and edge["right"] == right and edge["type"] == type]
+        if existing_edge:
+            return existing_edge[0]
+        else:
+        return (left, right, type) in edges
+
     def interpret_prompt_text(self, text):
 
         parsed = parse_prompt_text(text=text)
@@ -179,6 +214,7 @@ class Collector():
                 self.graph.create_edge(left=node_guid, right=name_guid, type="name")
         else:
 
+            # Both below can be abstracted
             # create a node if one doesn't yet exist
             if not self.named_node_exists(type=parsed["type_1"],
                     name=parsed["name_1"]):
@@ -193,6 +229,7 @@ class Collector():
                 name_guid = self.graph.create_node(datatype="str", value=parsed["name_2"])
                 self.graph.create_edge(left=node_guid, right=name_guid, type="name")
 
+            # Both below can be abstracted?
             # check that name only refers to one node
             left_guid = self.graph.get_guid_from_precedence_name(
                 type=parsed["type_1"],
@@ -206,7 +243,18 @@ class Collector():
             if len(right_guid) > 1:
                 raise Exception(f"Found {len(right_guid)} nodes with type '{parsed['type_2']}' and name '{parsed['name_2']}'")
 
-            self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
+            # check if an active edge exists with right and left and type equal to above
+            # if so, retrieve an ID (for edge edges) and don't create a new one
+            if self.edge_exists(left=left_guid[0], right=right_guid[0], type=parsed['edge_type']):
+                print(f"Found existing edge between guid: '{left_guid[0]}' and  guid: '{right_guid[0]}' with type: '{parsed['edge_type']}'.")
+            else:
+                self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
+
+            # add edge edges value node (if needed) and edge from edge to value
+
+
+
+# output as network tuple or CSV
 
 # "[" should set off a list of selectable node types + ": "
 # and completer for precedence names of that type + "]"
