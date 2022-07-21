@@ -22,12 +22,6 @@ def test_get_text_input_state(mock_custom_completer):
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [") == "type_2"
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: ") == "name_2"
 
-def test_parse_type_1(mock_custom_completer):
-    m = mock_custom_completer
-    assert m.parse_type_1("[person: Thomas Jefferson") == "person"
-    assert m.parse_type_1("[person") == "person"
-    assert m.parse_type_1("[") == ""
-
 def test_parse_prompt_text():
     res = parse_prompt_text("[person: Elon Musk] founder_of [company: Facebook]")
     assert res == {

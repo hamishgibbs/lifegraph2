@@ -66,8 +66,8 @@ def parse_prompt_text(text):
     names = re.findall(r": (.*?)\]", text)
     edge_type = re.findall(r"\] (.*?) \[", text)
     return {
-        "type_1": types[0],
-        "name_1": names[0],
+        "type_1": types[0] if len(types) > 0 else None,
+        "name_1": names[0] if len(names) > 0 else None,
         "edge_type": edge_type[0] if len(edge_type) else None,
         "type_2": types[1] if len(types) > 1 else None,
         "name_2": names[1] if len(names) > 1 else None
@@ -86,7 +86,25 @@ class CustomCompleter(Completer, Graph):
 
     def get_type_edge_suggestions(self, text):
         parsed = parse_prompt_text(text)
-        return list(self.derive_schema()[parsed["type_1"]])
+        try:
+            return list(self.derive_schema()[parsed["type_1"]])
+        except:
+            return []
+
+    def get_type_2_suggestions(self, text):
+        # these are the types pointed to by objects of type_1 with type_edge
+        # so, select all edges with left in types(type_1)
+        # then get all types of right of these edges
+        parsed = parse_prompt_text(text)
+        graph = self.current_state_graph()
+        type_1_guids = self.guids_for_type(parsed["type_1"])
+        left_edges_from_type_1 = [graph[k]["right"] for k in graph.keys() if str(graph[k]["left"]) in type_1_guids and graph[k]["type"] == parsed["edge_type"]]
+        return [graph[str(k)]["type"] for k in left_edges_from_type_1]
+
+    def get_name_2_suggestions(self, text):
+        # these are all names of objects of type_2
+        parsed = parse_prompt_text(text)
+        return [x[2] for x in self.precedence_names_for_type(type=parsed["type_2"])]
 
     def get_text_input_state(self, text):
         if text == "[":
@@ -112,9 +130,9 @@ class CustomCompleter(Completer, Graph):
         elif self.get_text_input_state(document.text) == "type_edge":
             types = self.get_type_edge_suggestions(document.text)
         elif self.get_text_input_state(document.text) == "type_2":
-            types = ["company"]
+            types = self.get_type_2_suggestions(document.text)
         elif self.get_text_input_state(document.text) == "name_2":
-            types = ["Facebook", "X.com"]
+            types = self.get_name_2_suggestions(document.text)
         else:
             types = []
 
@@ -149,7 +167,7 @@ class Collector():
 
     def interpret_prompt_text(self, text):
 
-        parsed = self.parse_prompt_text(text=text)
+        parsed = parse_prompt_text(text=text)
 
         if not parsed["edge_type"]:
             if self.named_node_exists(type=parsed["type_1"],
@@ -188,7 +206,7 @@ class Collector():
             if len(right_guid) > 1:
                 raise Exception(f"Found {len(right_guid)} nodes with type '{parsed['type_2']}' and name '{parsed['name_2']}'")
 
-            self.graph.create_edge(left=left_guid[0], right=right_guid[1], type=parsed['edge_type'])
+            self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
 
 # "[" should set off a list of selectable node types + ": "
 # and completer for precedence names of that type + "]"
