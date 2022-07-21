@@ -211,6 +211,10 @@ class Collector():
 # "[" should set off a list of selectable node types + ": "
 # and completer for precedence names of that type + "]"
 
+# this syntax should support arbitrary edge edges? Or should it? It is really simple right now
+# maybe it is a whole other syntax for that
+
+# give this a spin on the founders or a war or something - it is rocking.
 
 
 def main():

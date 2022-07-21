@@ -272,7 +272,14 @@ def test_concise_json_edge_edge():
     #print(json.dumps(g.current_state_graph(), indent=4))
     print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
 
+def test_concise_json_edge_edge_startup():
+    g = Graph(fn="data/startup_graph.json")
+    #year_value = g.create_node(datatype="integer", value="2013")
+    #book_published = g.create_edge(left=book, right=year_value, type="year_published")
+
+    #print(json.dumps(g.current_state_graph(), indent=4))
+    print(print(json.dumps(g.guid_to_concise_json(4), indent=4)))
 
 if __name__ == "__main__":
     #test_create_arnold()
-    test_concise_json_edge_edge()
+    test_concise_json_edge_edge_startup()
