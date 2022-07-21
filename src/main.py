@@ -168,15 +168,19 @@ class Graph:
                 if graph[str(outward_edges[name])]["value"]:
                     # if there is a value, return it with the property name
                     return (guid, name, graph[str(outward_edges[name])]["value"])
-                else:
-                    # if there is no value, do the precedence search again
-                    # I think this never gets hit
-                    return (guid, name, name_node_by_precedence(graph[str(outward_edges[name])]["right"]))
 
+    def guids_for_type(self, type):
+        graph = self.current_state_graph()
+        return [k for k in graph.keys() if graph[k]["type"] == type]
 
-        # maybe I am doing this all wrong and there is no up and down
-        # there is no inner or outer so this self organising doesn't make sense
-        # you need to say what you want the outer category to be
+    def precedence_names_for_type(self, type):
+        type_guids = self.guids_for_type(type=type)
+        return [self.name_node_by_precedence(guid=int(k)) for k in type_guids]
+
+    def get_guid_from_precedence_name(self, type, name):
+        """Returns a list of nodes of this type with the given precedence name."""
+        return [x[0] for x in self.precedence_names_for_type(type=type) if x[2] == name]
+
     def guid_to_concise_json(self, guid):
         # This is chicken scratch! clean it up!
         graph = self.current_state_graph()
