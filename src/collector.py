@@ -230,11 +230,33 @@ class Collector():
             if len(right_guid) > 1:
                 raise Exception(f"Found {len(right_guid)} nodes with type '{parsed['type_2']}' and name '{parsed['name_2']}'")
 
-            self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
+            edge_guid = self.graph.create_edge(left=left_guid[0], right=right_guid[0], type=parsed['edge_type'])
 
             # add edge edges value node (if needed) and edge from edge to value
+            for edge_edge in parsed["edge_edges"]:
+
+                if not self.named_node_exists(type=edge_edge[0],
+                        name=edge_edge[1]):
+                    node_guid = self.graph.create_node(type=edge_edge[0])
+                    name_guid = self.graph.create_node(datatype="str", value=edge_edge[1])
+                    self.graph.create_edge(left=node_guid, right=name_guid, type="name")
+
+                right_guid = self.graph.get_guid_from_precedence_name(
+                    type=edge_edge[0],
+                    name=edge_edge[1])
+
+                if len(right_guid) > 1:
+                    raise Exception(f"Found {len(right_guid)} nodes with type '{edge_edge[0]}' and name '{edge_edge[1]}'")
+
+                self.graph.create_edge(left=edge_guid, right=right_guid[0], type=edge_edge[0])
 
 
+# TODO could have better management of the difference between a named entity and a value
+#   as it stands, all values are named entities
+# TODO edge type suggestions don't seem to be working
+# TODO edge edge suggestions also don't seem to be working
+
+# great fucking job
 
 # output as network tuple or CSV
 
@@ -249,7 +271,7 @@ class Collector():
 
 def main():
 
-    Collector(fn="data/startup_graph.json").run()
+    Collector(fn="data/wwii_graph.json").run()
 
 if __name__ == "__main__":
     main()

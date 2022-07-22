@@ -144,10 +144,13 @@ class Graph:
             not graph[x]["left"] and
             not graph[x]["right"]]
 
-        schema = {k: set() for k in list(types)}
+        schema = {k: set() for k in list(set(types))}
+
+        edge_guids = [k for k in graph.keys() if graph[k]["left"] and graph[k]["right"]]
 
         for k in graph.keys():
-            if graph[k]["left"] and graph[k]["right"]:
+            # only consider nodes and edges, not edge edges for now
+            if graph[k]["left"] and graph[k]["right"] and k not in edge_guids:
                 node_type = graph[str(graph[k]["left"])]["type"]
                 schema[node_type].update([graph[k]["type"]])
 
@@ -278,7 +281,7 @@ def test_concise_json_edge_edge_startup():
     #book_published = g.create_edge(left=book, right=year_value, type="year_published")
 
     #print(json.dumps(g.current_state_graph(), indent=4))
-    print(print(json.dumps(g.guid_to_concise_json(4), indent=4)))
+    print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
 
 if __name__ == "__main__":
     #test_create_arnold()
