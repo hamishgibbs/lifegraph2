@@ -76,7 +76,7 @@ def parse_prompt_text(text):
         "type_2": types[1] if len(types) > 1 else None,
         "name_2": names[1] if len(names) > 1 else None,
         "edge_edge_types": edge_edge_types,
-        "edge_edge_names": edge_edge_types
+        "edge_edge_names": edge_edge_names
     }
 
 class CustomCompleter(Completer):
@@ -91,7 +91,10 @@ class CustomCompleter(Completer):
     def get_name_1_suggestions(self, text):
         # these are all the precedence names of all primitives of this type
         parsed = parse_prompt_text(text)
-        return sorted(self.index["name_index"][parsed["type_1"]])
+        try:
+            return sorted(self.index["name_index"][parsed["type_1"]])
+        except:
+            return []
 
     def get_type_edge_suggestions(self, text):
         parsed = parse_prompt_text(text)
@@ -107,7 +110,10 @@ class CustomCompleter(Completer):
     def get_name_2_suggestions(self, text):
         # these are all names of objects of type_2
         parsed = parse_prompt_text(text)
-        return sorted(self.index["name_index"][parsed["type_2"]])
+        try:
+            return sorted(self.index["name_index"][parsed["type_2"]])
+        except:
+            return []
 
     def get_type_edge_edge_suggestions(self, text):
         # simple types of all edge edges
@@ -115,7 +121,10 @@ class CustomCompleter(Completer):
 
     def get_edge_edge_name_suggestions(self, text):
         parsed = parse_prompt_text(text)
-        return sorted(self.index["edge_edge_name_index"][parsed["edge_edge_types"][-1]])
+        try:
+            return sorted(self.index["edge_edge_name_index"][parsed["edge_edge_types"][-1]])
+        except:
+            return []
 
     def get_text_input_state(self, text):
         if text == "[":
@@ -285,13 +294,15 @@ class Collector():
                 if len(right_guid) > 1:
                     raise Exception(f"Found {len(right_guid)} nodes with type '{edge_edge_type}' and name '{edge_edge_name}'")
 
-                self.graph.create_edge(left=edge_guid, right=edge_edge_type, type=edge_edge_name)
+                self.graph.create_edge(left=edge_guid, right=right_guid[0], type=edge_edge_type)
 
 
 # TODO could have better management of the difference between a named entity and a value
 #   as it stands, all values are named entities
 # TODO edge type suggestions don't seem to be working
 # TODO edge edge suggestions also don't seem to be working
+
+# Will including data types fuck up the completions just as they are working? yes.
 
 # great fucking job
 
@@ -304,6 +315,17 @@ class Collector():
 # maybe it is a whole other syntax for that
 
 # give this a spin on the founders or a war or something - it is rocking.
+
+# do an analysis of WWII invasions and flatten to visualise
+
+"""
+Investgations should proceed as:
+    (1) messy collection
+    (2) unifying names, regularising links
+    (3) Summarising / generalising as needed
+    (4) use
+
+"""
 
 
 def main():
