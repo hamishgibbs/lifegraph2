@@ -7,7 +7,7 @@ def mock_empty_collector():
 
 @pytest.fixture()
 def mock_custom_completer():
-    return CustomCompleter(fn="")
+    return CustomCompleter(completer_index={})
 
 def test_text_is_node_only(mock_empty_collector):
     assert mock_empty_collector.text_is_node_only("[person: Thomas Jefferson]")
@@ -23,9 +23,9 @@ def test_get_text_input_state(mock_custom_completer):
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: ") == "name_2"
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States]") == "name_2"
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (") == "type_edge_edge"
-    assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (date: 4th July 1776)") == "name_edge_edge"
+    assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (date: ") == "name_edge_edge"
     assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (date: 4th July 1776) (state") == "type_edge_edge"
-    assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (date: 4th July 1776) (state: Massachusetts)") == "name_edge_edge"
+    assert m.get_text_input_state("[person: Thomas Jefferson] founder_of [country: United States] (date: 4th July 1776) (state: ") == "name_edge_edge"
 
 def test_parse_prompt_text():
     res = parse_prompt_text("")
