@@ -127,7 +127,7 @@ class CustomCompleter(Completer):
             return []
 
     def get_text_input_state(self, text):
-        if text == "[":
+        if text.count("[") == 1:
             return "type_1"
         elif text.count("[") == 1 and text.count(":") == 1 and not text.count("]") == 1:
             return "name_1"
@@ -218,12 +218,12 @@ class Collector():
         # need to construct the completer from the schema sort of?
 
         # build completer indices here
-        completer_index = self.build_completer_index()
+        while True:
+            completer_index = self.build_completer_index()
 
+            text = prompt('>>> ', completer=CustomCompleter(completer_index=completer_index))
 
-        text = prompt('>>> ', completer=CustomCompleter(completer_index=completer_index))
-
-        self.interpret_prompt_text(text)
+            self.interpret_prompt_text(text)
 
     def text_is_node_only(self, text):
         return text.count("[") == 1
@@ -297,40 +297,23 @@ class Collector():
                 self.graph.create_edge(left=edge_guid, right=right_guid[0], type=edge_edge_type)
 
 
+
 # TODO could have better management of the difference between a named entity and a value
 #   as it stands, all values are named entities
-# TODO edge type suggestions don't seem to be working
-# TODO edge edge suggestions also don't seem to be working
 
-# Will including data types fuck up the completions just as they are working? yes.
+"""
 
-# great fucking job
+"""
+# Will including data types fuck up the completions just as they are working? yes. maybe.
 
 # output as network tuple or CSV
 
-# "[" should set off a list of selectable node types + ": "
-# and completer for precedence names of that type + "]"
-
-# this syntax should support arbitrary edge edges? Or should it? It is really simple right now
-# maybe it is a whole other syntax for that
-
-# give this a spin on the founders or a war or something - it is rocking.
-
-# do an analysis of WWII invasions and flatten to visualise
-
-"""
-Investgations should proceed as:
-    (1) messy collection
-    (2) unifying names, regularising links
-    (3) Summarising / generalising as needed
-    (4) use
-
-"""
+# How to manage edge names and do summarising / generalising
 
 
 def main():
 
-    Collector(fn="data/wwii_graph.json").run()
+    Collector(fn="data/wwii_graph_messy.json").run()
 
 if __name__ == "__main__":
     main()

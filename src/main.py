@@ -136,23 +136,39 @@ class Graph:
         return new_guid
 
     def derive_schema(self):
-        # does this work for edge edges?
         graph = self.current_state_graph()
 
-        types = [graph[x]["type"] for x in graph.keys()
-            if graph[x]["type"] and
-            not graph[x]["left"] and
-            not graph[x]["right"]]
+        all_edge_guids = [k for k in graph.keys() if graph[k]["left"] and graph[k]["right"]]
+        edge_edge_guids = [k for k in graph.keys() if str(graph[k]["left"]) in all_edge_guids]
+        node_edge_guids = set(all_edge_guids).difference(set(edge_edge_guids))
+        node_guids = set(graph.keys()).difference(set(all_edge_guids))
 
-        schema = {k: set() for k in list(set(types))}
+        schema = {}
 
-        edge_guids = [k for k in graph.keys() if graph[k]["left"] and graph[k]["right"]]
+        for k in node_guids:
+            if graph[k]["type"]:
+                schema[graph[k]["type"]] = set()
 
-        for k in graph.keys():
-            # only consider nodes and edges, not edge edges for now
-            if graph[k]["left"] and graph[k]["right"] and k not in edge_guids:
-                node_type = graph[str(graph[k]["left"])]["type"]
-                schema[node_type].update([graph[k]["type"]])
+        for k in node_edge_guids:
+            left_type = graph[str(graph[k]["left"])]["type"]
+            schema[left_type].update([graph[k]["type"]])
+
+        for type in schema.keys():
+            properties = schema[type]
+            data = {k: set() for k in properties}
+            schema[type] = data
+
+        for k in edge_edge_guids:
+            edge_edge_type = graph[k]["type"]
+            left_edge_guid = graph[k]["left"]
+            left_edge_type = graph[str(left_edge_guid)]["type"]
+            left_node_guid = graph[str(left_edge_guid)]["left"]
+            left_node_type = graph[str(left_node_guid)]["type"]
+            schema[left_node_type][left_edge_type].update([edge_edge_type])
+
+        for type in schema.keys():
+            for property in schema[type].keys():
+                schema[type][property] = list(schema[type][property])
 
         return schema
 
@@ -276,13 +292,22 @@ def test_concise_json_edge_edge():
     print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
 
 def test_concise_json_edge_edge_startup():
-    g = Graph(fn="data/wwii_graph.json")
+    g = mock_governor_of_california_on_date()
     #year_value = g.create_node(datatype="integer", value="2013")
     #book_published = g.create_edge(left=book, right=year_value, type="year_published")
 
     #print(json.dumps(g.current_state_graph(), indent=4))
     print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
 
+
+def test_derive_schema_edge_edge():
+    g = Graph(fn="data/wwii_graph_messy.json")
+    #year_value = g.create_node(datatype="integer", value="2013")
+    #book_published = g.create_edge(left=book, right=year_value, type="year_published")
+
+    #print(json.dumps(g.current_state_graph(), indent=4))
+    print(json.dumps(g.derive_schema(), indent=4))
+
 if __name__ == "__main__":
     #test_create_arnold()
-    test_concise_json_edge_edge_startup()
+    test_derive_schema_edge_edge()
