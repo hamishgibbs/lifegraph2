@@ -302,6 +302,11 @@ class Collector():
 #   as it stands, all values are named entities
 
 """
+Can supporting values in addition to named entitites work?
+
+[person: TJ] date_of_birth [date: 12 April 1710]
+
+
 
 """
 # Will including data types fuck up the completions just as they are working? yes. maybe.

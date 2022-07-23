@@ -180,7 +180,7 @@ class Graph:
         outward_edges = dict(ChainMap(*outward_edges))
 
         if not len(outward_edges.keys()):
-            return (guid, None, graph[str(guid)]["value"])
+            return (guid, graph[str(guid)]["datatype"], graph[str(guid)]["value"])
 
         for name in precedence:
             if name in outward_edges.keys():
@@ -308,6 +308,19 @@ def test_derive_schema_edge_edge():
     #print(json.dumps(g.current_state_graph(), indent=4))
     print(json.dumps(g.derive_schema(), indent=4))
 
+def test_name_node_by_precedence_value_node():
+    g = Graph(fn="data/wwii_graph_messy.json")
+    #year_value = g.create_node(datatype="integer", value="2013")
+    #book_published = g.create_edge(left=book, right=year_value, type="year_published")
+
+    #print(json.dumps(g.current_state_graph(), indent=4))
+    #guid = g.create_node(datatype="date", value="Date Today")
+    #print(guid)
+    #print(json.dumps(g.guid_to_concise_json(94), indent=4))
+    print(g.name_node_by_precedence(94))
+    #print(g.get_guid_from_precedence_name("Date Today"))
+
+
 if __name__ == "__main__":
     #test_create_arnold()
-    test_derive_schema_edge_edge()
+    test_name_node_by_precedence_value_node()
