@@ -188,17 +188,28 @@ class Graph:
                     # if there is a value, return it with the property name
                     return (guid, name, graph[str(outward_edges[name])]["value"])
 
-    def guids_for_type(self, type):
+    def guids_for_node_of_type(self, type):
         graph = self.current_state_graph()
         return [k for k in graph.keys() if graph[k]["type"] == type]
 
-    def precedence_names_for_type(self, type):
-        type_guids = self.guids_for_type(type=type)
+    def guids_for_value_of_datatype(self, datatype):
+        graph = self.current_state_graph()
+        return [k for k in graph.keys() if graph[k]["datatype"] == datatype]
+
+    def precedence_names_for_node_of_type(self, type):
+        type_guids = self.guids_for_node_of_type(type=type)
         return [self.name_node_by_precedence(guid=int(k)) for k in type_guids]
 
-    def get_guid_from_precedence_name(self, type, name):
+    def precedence_names_for_value_of_datatype(self, datatype):
+        type_guids = self.guids_for_value_of_datatype(datatype=datatype)
+        return [self.name_node_by_precedence(guid=int(k)) for k in type_guids]
+
+    def get_guid_from_precedence_name(self, name, type=None, datatype=None):
         """Returns a list of nodes of this type with the given precedence name."""
-        return [x[0] for x in self.precedence_names_for_type(type=type) if x[2] == name]
+        if type:
+            return [x[0] for x in self.precedence_names_for_node_of_type(type=type) if x[2] == name]
+        elif datatype:
+            return [x[0] for x in self.precedence_names_for_value_of_datatype(datatype=datatype) if x[2] == name]
 
     def guid_to_concise_json(self, guid):
         # This is chicken scratch! clean it up!
@@ -317,8 +328,8 @@ def test_name_node_by_precedence_value_node():
     #guid = g.create_node(datatype="date", value="Date Today")
     #print(guid)
     #print(json.dumps(g.guid_to_concise_json(94), indent=4))
-    print(g.name_node_by_precedence(94))
-    #print(g.get_guid_from_precedence_name("Date Today"))
+    #print(g.name_node_by_precedence(94))
+    print(g.get_guid_from_precedence_name("Date Today", datatype="date"))
 
 
 if __name__ == "__main__":
