@@ -180,7 +180,7 @@ class Graph:
         outward_edges = dict(ChainMap(*outward_edges))
 
         if not len(outward_edges.keys()):
-            return (guid, None, graph[str(guid)]["value"])
+            return (guid, graph[str(guid)]["datatype"], graph[str(guid)]["value"])
 
         for name in precedence:
             if name in outward_edges.keys():
@@ -188,17 +188,28 @@ class Graph:
                     # if there is a value, return it with the property name
                     return (guid, name, graph[str(outward_edges[name])]["value"])
 
-    def guids_for_type(self, type):
+    def guids_for_node_of_type(self, type):
         graph = self.current_state_graph()
         return [k for k in graph.keys() if graph[k]["type"] == type]
 
-    def precedence_names_for_type(self, type):
-        type_guids = self.guids_for_type(type=type)
+    def guids_for_value_of_datatype(self, datatype):
+        graph = self.current_state_graph()
+        return [k for k in graph.keys() if graph[k]["datatype"] == datatype]
+
+    def precedence_names_for_node_of_type(self, type):
+        type_guids = self.guids_for_node_of_type(type=type)
         return [self.name_node_by_precedence(guid=int(k)) for k in type_guids]
 
-    def get_guid_from_precedence_name(self, type, name):
+    def precedence_names_for_value_of_datatype(self, datatype):
+        type_guids = self.guids_for_value_of_datatype(datatype=datatype)
+        return [self.name_node_by_precedence(guid=int(k)) for k in type_guids]
+
+    def get_guid_from_precedence_name(self, name, type=None, datatype=None):
         """Returns a list of nodes of this type with the given precedence name."""
-        return [x[0] for x in self.precedence_names_for_type(type=type) if x[2] == name]
+        if type:
+            return [x[0] for x in self.precedence_names_for_node_of_type(type=type) if x[2] == name]
+        elif datatype:
+            return [x[0] for x in self.precedence_names_for_value_of_datatype(datatype=datatype) if x[2] == name]
 
     def guid_to_concise_json(self, guid):
         # This is chicken scratch! clean it up!
@@ -308,6 +319,19 @@ def test_derive_schema_edge_edge():
     #print(json.dumps(g.current_state_graph(), indent=4))
     print(json.dumps(g.derive_schema(), indent=4))
 
+def test_name_node_by_precedence_value_node():
+    g = Graph(fn="data/manual_edge_edge_graph.json")
+    #year_value = g.create_node(datatype="integer", value="2013")
+    #book_published = g.create_edge(left=book, right=year_value, type="year_published")
+
+    #print(json.dumps(g.current_state_graph(), indent=4))
+    #guid = g.create_node(datatype="date", value="Date Today")
+    #print(guid)
+    #print(json.dumps(g.guid_to_concise_json(94), indent=4))
+    #print(g.name_node_by_precedence(94))
+    print(g.get_guid_from_precedence_name(name="100", datatype="int"))
+
+
 if __name__ == "__main__":
     #test_create_arnold()
-    test_derive_schema_edge_edge()
+    test_name_node_by_precedence_value_node()
