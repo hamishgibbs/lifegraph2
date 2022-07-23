@@ -127,7 +127,7 @@ class CustomCompleter(Completer):
             return []
 
     def get_text_input_state(self, text):
-        if text.count("[") == 1:
+        if text == "[":
             return "type_1"
         elif text.count("[") == 1 and text.count(":") == 1 and not text.count("]") == 1:
             return "name_1"
@@ -177,8 +177,6 @@ class Collector():
         self.graph = Graph(fn=fn)
 
     def build_completer_index(self):
-
-        # type index is the unique of all edges (not edge edges)
         graph = self.graph.current_state_graph()
         all_edge_guids = [k for k in graph.keys() if graph[k]["left"] and graph[k]["right"]]
         edge_edge_guids = [k for k in graph.keys() if str(graph[k]["left"]) in all_edge_guids]
@@ -189,7 +187,7 @@ class Collector():
             (
                 graph[str(graph[k]["left"])]["type"],
                 graph[k]["type"],
-                graph[str(graph[k]["right"])]["type"]
+                graph[str(graph[k]["right"])]["type"] if graph[str(graph[k]["right"])]["type"] else graph[str(graph[k]["right"])]["datatype"]
             )
             for k in graph.keys() if k in node_edge_guids
         ]
@@ -265,7 +263,6 @@ class Collector():
     def interpret_prompt_text(self, text, datatype_names = ["date", "int", "str"]):
 
         #text = "[person: Thomas Jefferson] founder_of [country: United States] (date: 1776)" # TESTING
-        text = "[person: Thomas Jefferson] height_cm [int: 100]"
         parsed = parse_prompt_text(text=text)
 
         # create only a single node (either a named node or value node)
@@ -323,26 +320,23 @@ class Collector():
 
 
 # TODO could have better management of the difference between a named entity and a value
-#   as it stands, all values are named entities
+#   as it stands, all values are named entities X
 
-"""
-Can supporting values in addition to named entitites work?
-
-[person: TJ] date_of_birth [date: 12 April 1710]
-
-
-
-"""
 # Will including data types fuck up the completions just as they are working? yes. maybe.
+# now fix completions
 
 # output as network tuple or CSV
 
 # How to manage edge names and do summarising / generalising
 
+# choosing not to have auto completion for datatype types because it isn't really helpful to have a list of every single number inputted
+# In future - it would be nice to prevent duplication of exactly identical edges (including based on edge edges)
+
 
 def main():
 
-    Collector(fn="data/manual_edge_edge_graph.json").run()
+    Collector(fn="data/zf_graph.json").run()
+    # attempt collection of ZF data
 
 if __name__ == "__main__":
     main()

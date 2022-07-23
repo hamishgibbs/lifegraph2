@@ -212,33 +212,30 @@ class Graph:
             return [x[0] for x in self.precedence_names_for_value_of_datatype(datatype=datatype) if x[2] == name]
 
     def guid_to_concise_json(self, guid):
-        # This is chicken scratch! clean it up!
         graph = self.current_state_graph()
         concise = {guid: {}}
+
         # get edges leaving this node
         out_edges = [k for k in graph.keys() if graph[k]["left"] == guid]
 
         for out_edge in out_edges:
+            out_edge_name = graph[out_edge]["type"]
+
+            if out_edge_name in concise[guid].keys():
+                out_edge_name = f"{out_edge_name}.{sum([1 for k in concise[guid].keys() if k == out_edge_name])}"
 
             # get edges leaving from these edges
             out_edge_edges = [k for k in graph.keys() if str(graph[k]["left"]) == out_edge]
             if not len(out_edge_edges):
-                concise[guid].update({graph[out_edge]["type"]: self.name_node_by_precedence(graph[out_edge]["right"])[2]})
+                concise[guid].update({out_edge_name: self.name_node_by_precedence(graph[out_edge]["right"])[2]})
             else:
-                concise[guid].update({graph[out_edge]["type"]: {self.name_node_by_precedence(graph[out_edge]["right"])[2]: {}}})
+                concise[guid].update({out_edge_name: {self.name_node_by_precedence(graph[out_edge]["right"])[2]: {}}})
                 for out_edge_edge in out_edge_edges:
-                    concise[guid][graph[out_edge]["type"]][self.name_node_by_precedence(graph[out_edge]["right"])[2]].update({
-                        graph[out_edge_edge]["type"]: self.name_node_by_precedence(graph[out_edge_edge]["right"])[2]
+                    concise[guid][out_edge_name][self.name_node_by_precedence(graph[out_edge]["right"])[2]].update({
+                        out_edge_name: self.name_node_by_precedence(graph[out_edge_edge]["right"])[2]
                     })
 
         return concise
-
-    # now add speedy data collection (i.e. Arnold Schwarzenneger height 6' 1")
-    # (i.e. Zaifeng, Prince Chun, appointed Qing Emperor, year: 1901)
-        # second one is an example of an edge edge
-    # [zaifeng, appointed, Qing Emperor [year: 1901, location: China]]
-    # fuzzy_match_by_precedence() # match a string to some entity by appromximate name on decending precedence keys
-    # create_from_freetext(text) # match subject, predicate, object, with any n edge edges
 
 def main():
 
@@ -303,12 +300,12 @@ def test_concise_json_edge_edge():
     print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
 
 def test_concise_json_edge_edge_startup():
-    g = mock_governor_of_california_on_date()
+    g = Graph(fn="data/zf_graph.json")
     #year_value = g.create_node(datatype="integer", value="2013")
     #book_published = g.create_edge(left=book, right=year_value, type="year_published")
 
     #print(json.dumps(g.current_state_graph(), indent=4))
-    print(print(json.dumps(g.guid_to_concise_json(1), indent=4)))
+    print(json.dumps(g.guid_to_concise_json(1), indent=4))
 
 
 def test_derive_schema_edge_edge():
@@ -334,4 +331,5 @@ def test_name_node_by_precedence_value_node():
 
 if __name__ == "__main__":
     #test_create_arnold()
-    test_name_node_by_precedence_value_node()
+    #test_name_node_by_precedence_value_node()
+    test_concise_json_edge_edge_startup()
