@@ -228,46 +228,70 @@ class Collector():
     def text_is_node_only(self, text):
         return text.count("[") == 1
 
-    def named_node_exists(self, type, name):
-        return len(self.graph.get_guid_from_precedence_name(
-            type=type,
-            name=name)) > 0
+    def node_guid_from_precedence_name(self, type, name):
+        # check if either a named node or a value node exists with this precedence name
+        # first search for a named node, then a value node
+        # Could this be changed deeper in Graph?
+        named_node_guids = self.graph.get_guid_from_precedence_name(
+            name=name,
+            type=type)
+        value_node_guids = self.graph.get_guid_from_precedence_name(
+            name=name,
+            datatype=type)
+        if len(named_node_guids):
+            return named_node_guids
+        else:
+            return value_node_guids
 
-    def interpret_prompt_text(self, text):
+    def create_named_or_value_node(self, type, name, datatype_names, error):
+        # This currently does more than one thing (you can turn an error on and off with `error`)
+        existing_node_guids = self.node_guid_from_precedence_name(type=type, name=name)
 
+        if len(existing_node_guids) > 0 and error:
+            raise Exception(f"Existing node of type '{type}' with name '{name}'")
+        elif len(existing_node_guids) > 0 and not error:
+            return existing_node_guids[0]
+
+        if type in datatype_names:
+            node_guid = self.graph.create_node(datatype=type, value=name)
+        else:
+            node_guid = self.graph.create_node(type=type)
+            name_guid = self.graph.create_node(datatype="str", value=name)
+            self.graph.create_edge(left=node_guid, right=name_guid, type="name")
+
+        return node_guid
+
+
+    def interpret_prompt_text(self, text, datatype_names = ["date", "int", "str"]):
+
+        #text = "[person: Thomas Jefferson] founder_of [country: United States] (date: 1776)" # TESTING
+        text = "[person: Thomas Jefferson] height_cm [int: 100]"
         parsed = parse_prompt_text(text=text)
 
+        # create only a single node (either a named node or value node)
         if not parsed["edge_type"]:
-            if self.named_node_exists(type=parsed["type_1"],
-                    name=parsed["name_1"]):
-                raise Exception(f"Existing node of type '{parsed['type_1']}' with name '{parsed['name_1']}'")
-            else:
-                node_guid = self.graph.create_node(type=parsed["type_1"])
-                name_guid = self.graph.create_node(datatype="str", value=parsed["name_1"])
-                self.graph.create_edge(left=node_guid, right=name_guid, type="name")
+            self.create_named_or_value_node(
+                type=parsed["type_1"],
+                name=parsed["name_1"],
+                datatype_names=datatype_names,
+                error=True)
         else:
+            self.create_named_or_value_node(
+                type=parsed["type_1"],
+                name=parsed["name_1"],
+                datatype_names=datatype_names,
+                error=False)
 
-            # Both below can be abstracted
-            # create a node if one doesn't yet exist
-            if not self.named_node_exists(type=parsed["type_1"],
-                    name=parsed["name_1"]):
-                node_guid = self.graph.create_node(type=parsed["type_1"])
-                name_guid = self.graph.create_node(datatype="str", value=parsed["name_1"])
-                self.graph.create_edge(left=node_guid, right=name_guid, type="name")
+            self.create_named_or_value_node(
+                type=parsed["type_2"],
+                name=parsed["name_2"],
+                datatype_names=datatype_names,
+                error=False)
 
-            # create a node if one doesn't yet exist
-            if not self.named_node_exists(type=parsed["type_2"],
-                    name=parsed["name_2"]):
-                node_guid = self.graph.create_node(type=parsed["type_2"])
-                name_guid = self.graph.create_node(datatype="str", value=parsed["name_2"])
-                self.graph.create_edge(left=node_guid, right=name_guid, type="name")
-
-            # Both below can be abstracted?
-            # check that name only refers to one node
-            left_guid = self.graph.get_guid_from_precedence_name(
+            left_guid = self.node_guid_from_precedence_name(
                 type=parsed["type_1"],
                 name=parsed["name_1"])
-            right_guid = self.graph.get_guid_from_precedence_name(
+            right_guid = self.node_guid_from_precedence_name(
                 type=parsed["type_2"],
                 name=parsed["name_2"])
 
@@ -281,13 +305,13 @@ class Collector():
             # add edge edges value node (if needed) and edge from edge to value
             for edge_edge_type, edge_edge_name in zip(parsed["edge_edge_types"], parsed["edge_edge_names"]):
 
-                if not self.named_node_exists(type=edge_edge_type,
-                        name=edge_edge_name):
-                    node_guid = self.graph.create_node(type=edge_edge_type)
-                    name_guid = self.graph.create_node(datatype="str", value=edge_edge_name)
-                    self.graph.create_edge(left=node_guid, right=name_guid, type="name")
+                self.create_named_or_value_node(
+                    type=edge_edge_type,
+                    name=edge_edge_name,
+                    datatype_names=datatype_names,
+                    error=False)
 
-                right_guid = self.graph.get_guid_from_precedence_name(
+                right_guid = self.node_guid_from_precedence_name(
                     type=edge_edge_type,
                     name=edge_edge_name)
 
@@ -318,7 +342,7 @@ Can supporting values in addition to named entitites work?
 
 def main():
 
-    Collector(fn="data/wwii_graph_messy.json").run()
+    Collector(fn="data/manual_edge_edge_graph.json").run()
 
 if __name__ == "__main__":
     main()

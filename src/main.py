@@ -320,7 +320,7 @@ def test_derive_schema_edge_edge():
     print(json.dumps(g.derive_schema(), indent=4))
 
 def test_name_node_by_precedence_value_node():
-    g = Graph(fn="data/wwii_graph_messy.json")
+    g = Graph(fn="data/manual_edge_edge_graph.json")
     #year_value = g.create_node(datatype="integer", value="2013")
     #book_published = g.create_edge(left=book, right=year_value, type="year_published")
 
@@ -329,7 +329,7 @@ def test_name_node_by_precedence_value_node():
     #print(guid)
     #print(json.dumps(g.guid_to_concise_json(94), indent=4))
     #print(g.name_node_by_precedence(94))
-    print(g.get_guid_from_precedence_name("Date Today", datatype="date"))
+    print(g.get_guid_from_precedence_name(name="100", datatype="int"))
 
 
 if __name__ == "__main__":
