@@ -313,7 +313,7 @@ class Collector():
 
 def main():
 
-    Collector(fn="data/wwii_graph_messy.json").run()
+    Collector(fn="data/manual_edge_edge_graph.json").run()
 
 if __name__ == "__main__":
     main()
